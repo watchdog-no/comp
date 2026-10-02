@@ -69,10 +69,13 @@ environment variables in Trigger.dev (same values as the matching Railway servic
 database's public proxy URL). The app project cannot be indexed without them.
 
 Database TLS from the tasks: Railway Postgres presents a certificate signed by its own root CA
-(`watchdog/railway-postgres-root-ca.crt`, valid until 2028-12-30). The API task build copies it in
-as the CA bundle, so API tasks verify the server. The app task build has no such step and runs with
+(`watchdog/railway-postgres-root-ca.crt`, valid until 2028-12-30). The API task project has
+`DATABASE_CA_CERT` set to that certificate, so API tasks verify the server against exactly that
+CA. Relying on `NODE_EXTRA_CA_CERTS` (what upstream's CA-bundle build extension sets) does not
+work: Trigger.dev task processes do not pick it up, and every task that touched the database
+failed with "self-signed certificate in certificate chain". The app task project still runs with
 `PRISMA_ALLOW_INSECURE_TLS=1` (encrypted, server not verified). If Railway regenerates the
-certificate, fetch the new root and redeploy the API tasks.
+certificate, fetch the new root, update the file and the variable.
 
 ## Changes to upstream files
 
@@ -82,6 +85,7 @@ Each is one commit of its own. The two auth changes are inert unless their varia
 | --- | --- | --- | --- |
 | Restrict sign-up to allowed email domains or invited emails | `apps/api/src/auth/auth.server.ts`, `apps/api/src/auth/signup-policy.ts` (+ spec) | `AUTH_ALLOWED_EMAIL_DOMAINS` | not opened yet |
 | Configurable session cookie domain | `apps/api/src/auth/auth.server.ts` | `AUTH_COOKIE_DOMAIN` | not opened yet |
+| Verify the database against an explicit CA | `apps/api/prisma/client.ts` | `DATABASE_CA_CERT` | not opened yet |
 | Current AI models, no `temperature` (Sonnet 5.5, Opus 5.5, Gemini 3.8 flash, gpt-6.1-sol, gpt-6-luna; Groq calls moved to gpt-6-luna) | 27 files under `apps/app/src` and `apps/api/src` | – | not for upstream; re-apply after syncs that touch these lines |
 
 ## Access
