@@ -1,0 +1,14 @@
+# Nightly Postgres dump to R2, run as a Railway cron service.
+# Needs DATABASE_URL, R2_ENDPOINT, R2_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+# and optionally HEARTBEAT_URL. Retention is a lifecycle rule on the bucket.
+FROM postgres:18
+
+RUN apt-get update && apt-get install -y --no-install-recommends awscli curl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV AWS_DEFAULT_REGION=auto \
+    AWS_REQUEST_CHECKSUM_CALCULATION=when_required \
+    AWS_RESPONSE_CHECKSUM_VALIDATION=when_required
+
+ENTRYPOINT []
+CMD ["bash", "-euo", "pipefail", "-c", "f=compai-$(date -u +%Y-%m-%dT%H%MZ).dump; pg_dump --format=custom --no-owner --dbname=\"$DATABASE_URL\" --file=/tmp/$f; aws s3 cp /tmp/$f s3://$R2_BUCKET/postgres/$f --endpoint-url \"$R2_ENDPOINT\" --only-show-errors; echo \"uploaded $f ($(stat -c %s /tmp/$f) bytes)\"; if [ -n \"${HEARTBEAT_URL:-}\" ]; then curl -fsS -m 20 \"$HEARTBEAT_URL\" >/dev/null; fi"]
