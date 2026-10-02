@@ -1,6 +1,6 @@
 'use server';
 
-import { groq } from '@ai-sdk/groq';
+import { openai } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 
 const ERROR_SANITIZATION_SYSTEM_PROMPT = `Transform error messages into friendly, helpful guidance. Hide any sensitive data.
@@ -77,7 +77,7 @@ const extractRawError = (err: unknown): string => {
  * Sanitize an error message using AI to make it user-friendly
  * and remove any sensitive information.
  *
- * Uses deterministic settings (temperature: 0) for consistent results.
+ * Uses the model's default sampling settings.
  */
 export const sanitizeErrorMessage = async (rawError: unknown): Promise<string> => {
   const errorString = extractRawError(rawError);
@@ -90,10 +90,9 @@ export const sanitizeErrorMessage = async (rawError: unknown): Promise<string> =
   // Always use AI to make errors user-friendly and hide sensitive data
   try {
     const { text } = await generateText({
-      model: groq('meta-llama/llama-4-scout-17b-16e-instruct'),
+      model: openai('gpt-6-luna'),
       system: ERROR_SANITIZATION_SYSTEM_PROMPT,
       prompt: errorString,
-      temperature: 0, // Deterministic output
       maxRetries: 2,
     });
 

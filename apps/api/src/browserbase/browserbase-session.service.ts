@@ -38,7 +38,7 @@ export const INTERACTIVE_SESSION_TIMEOUT_SECONDS = 15 * 60;
 // Model behind extract()/act() (reading pages, verdicts, form fills). Separate
 // from the navigation (CUA) model and configurable via env; default unchanged.
 const STAGEHAND_MODEL =
-  process.env.BROWSERBASE_STAGEHAND_MODEL || 'anthropic/claude-sonnet-4-6';
+  process.env.BROWSERBASE_STAGEHAND_MODEL || 'anthropic/claude-sonnet-5-5';
 const BROWSERBASE_API_MAX_ATTEMPTS = 3;
 const BROWSERBASE_RETRY_DELAYS_MS = [250, 750];
 const BROWSERBASE_DEFAULT_HEADERS = { 'accept-encoding': 'identity' };

@@ -18,7 +18,7 @@ import { generateObject, jsonSchema } from 'ai';
 const gateway = createGatewayProvider({
   baseURL: process.env.AI_GATEWAY_BASE_URL,
 });
-const ONBOARDING_MODEL = 'google/gemini-3-flash' as const;
+const ONBOARDING_MODEL = 'google/gemini-3.8-flash' as const;
 import axios from 'axios';
 import { z } from 'zod';
 import type { researchVendor } from '../scrape/research';

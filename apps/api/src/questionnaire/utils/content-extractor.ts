@@ -794,7 +794,7 @@ async function extractPdfWithClaude(params: {
     label: params.label,
   });
   const { text } = await generateText({
-    model: anthropic('claude-sonnet-4-6'),
+    model: anthropic('claude-sonnet-5-5'),
     messages: [
       {
         role: 'user',

@@ -48,7 +48,7 @@ const gateway = createGatewayProvider({
  * goes GA, and every rerank call then 404s. Both callers in `run-linkage.ts` swallow that
  * into a cosine-only fallback, so the failure is silent — suggestion quality just degrades.
  */
-const RERANK_MODEL = 'google/gemini-3.1-flash-lite' as const;
+const RERANK_MODEL = 'google/gemini-3.5-flash-lite' as const;
 
 const SYSTEM_PROMPT = `You are a GRC analyst evaluating which compliance tasks would meaningfully reduce a specific risk or vendor exposure.
 
