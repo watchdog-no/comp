@@ -86,7 +86,8 @@ Each is one commit of its own. The two auth changes are inert unless their varia
 
 ## Access
 
-Sign-up is limited to `@watchdog.no` addresses and to emails with a pending invitation. To let an
+Sign-up is limited to `@watchdog.no` addresses and to emails with a pending invitation. Staff are
+added under People with the employee role, which sends no email unless the portal invite is ticked. To let an
 auditor in, invite their email under People with the auditor role; nobody else at their firm can
 create an account.
 
@@ -115,7 +116,29 @@ create an account.
 - `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (Upstash database `compai-prod`,
   eu-central-1) are required in practice: the setup flow keeps its session in Redis and returns 500
   without it. `MOCK_REDIS=true` is not a substitute; it causes a redirect loop on `/setup`.
+- `UPSTASH_VECTOR_REST_URL` / `UPSTASH_VECTOR_REST_TOKEN` (Upstash Vector index `compai-prod`,
+  eu-west-1, 1536 dimensions, cosine): onboarding's step that links risks and vendors to controls
+  fails without it. Needed on the app, the API and both Trigger.dev projects.
+- `AI_GATEWAY_API_KEY` (Vercel AI Gateway): onboarding, task automations and suggestion ranking
+  call their models through the gateway, not through the OpenAI and Anthropic keys.
+- `FIRECRAWL_API_KEY`: vendor website research and auditor content generation.
 - `PORT=3000` on the app and portal: Railway otherwise injects its own port and the domain returns 502.
+
+## Integrations
+
+The open-source code ships nine integrations: AWS, Azure, GCP, GitHub, GitHub App, Google
+Workspace, Vercel, Rippling and Aikido. The several hundred others in Comp's hosted product are
+definitions in their database and are not in this repository.
+
+An OAuth integration shows "Coming Soon" until its OAuth app credentials are registered under
+Admin -> Integrations, which needs a platform admin (`User.role = 'admin'` in the database). The
+callback URL for every provider is `https://api.comp.watchdog.no/v1/integrations/oauth/callback`.
+
+| Integration | OAuth app | Notes |
+| --- | --- | --- |
+| GitHub | OAuth App "Watchdog CompAI" in the `watchdog-no` org | "Expire user access tokens" off: the integration does not refresh tokens. Use the GitHub card, not GitHub App (its install link is hard-coded to Comp's own app). |
+| Google Workspace, GCP | One web OAuth client "Watchdog CompAI" in the Watchdog Google Cloud project | Workspace must be connected by a Workspace admin. User filter: include only `@watchdog.no`. |
+| Vercel | Integration `watchdog-compai` in the Vercel Integrations Console, unlisted, read-only on deployments and projects | Must be a classic integration. A "Sign in with Vercel" app (Settings -> Apps) only offers identity scopes and its install URL 404s. |
 
 ## Backups and monitoring
 
@@ -126,8 +149,8 @@ Better Stack has uptime monitors for the three health endpoints.
 
 ## Deliberately off
 
-Unset, and what enables each: Stripe billing (`STRIPE_*`), Upstash Vector for questionnaire and knowledge-base search
-(`UPSTASH_VECTOR_REST_*`), PostHog, Novu, Dub, Browserbase, Firecrawl, Fleet device agent,
+Unset, and what enables each: Stripe billing (`STRIPE_*`), PostHog, Novu, Dub, Browserbase, Fleet device agent
+(its per-organization label task fails on every new organization, which is harmless),
 background checks, hosted MCP (`GRAM_*`), pentests (real `MACED_API_KEY`), custom trust-page
 domains (`VERCEL_*`, `TRUST_PORTAL_PROJECT_ID`).
 
