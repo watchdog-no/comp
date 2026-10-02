@@ -106,6 +106,9 @@ create an account.
 - `MACED_API_KEY=mc_dev_disabled`: the API refuses to start without a key of that shape, although
   we do not use the pentest module.
 - `TRUST_APP_URL` must be set in production or the API does not start.
+- `MOCK_REDIS=true` on the app and portal: the setup flow stores its session in Redis and returns
+  500 without one. The built-in in-memory stand-in is enough for a single instance; it is cleared on
+  every deploy. Replace with `UPSTASH_REDIS_REST_*` if we ever run more than one replica.
 - `PORT=3000` on the app and portal: Railway otherwise injects its own port and the domain returns 502.
 
 ## Backups and monitoring
@@ -117,8 +120,8 @@ Better Stack has uptime monitors for the three health endpoints.
 
 ## Deliberately off
 
-Unset, and what enables each: Stripe billing (`STRIPE_*`), Upstash Redis rate limiting
-(`UPSTASH_REDIS_REST_*`), Upstash Vector for questionnaire and knowledge-base search
+Unset, and what enables each: Stripe billing (`STRIPE_*`), Upstash Redis (rate limiting, and real
+storage for the setup session; `UPSTASH_REDIS_REST_*`), Upstash Vector for questionnaire and knowledge-base search
 (`UPSTASH_VECTOR_REST_*`), PostHog, Novu, Dub, Browserbase, Firecrawl, Fleet device agent,
 background checks, hosted MCP (`GRAM_*`), pentests (real `MACED_API_KEY`), custom trust-page
 domains (`VERCEL_*`, `TRUST_PORTAL_PROJECT_ID`).
