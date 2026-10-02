@@ -71,12 +71,13 @@ certificate, fetch the new root and redeploy the API tasks.
 
 ## Changes to upstream files
 
-Each is one small commit of its own and inert unless its variable is set.
+Each is one commit of its own. The two auth changes are inert unless their variable is set.
 
 | Change | Files | Variable | Upstream PR |
 | --- | --- | --- | --- |
 | Restrict sign-up to allowed email domains or invited emails | `apps/api/src/auth/auth.server.ts`, `apps/api/src/auth/signup-policy.ts` (+ spec) | `AUTH_ALLOWED_EMAIL_DOMAINS` | not opened yet |
 | Configurable session cookie domain | `apps/api/src/auth/auth.server.ts` | `AUTH_COOKIE_DOMAIN` | not opened yet |
+| Current AI models, no `temperature` (Sonnet 5.5, Opus 5.5, Gemini 3.8 flash, gpt-6.1-sol, gpt-6-luna; Groq calls moved to gpt-6-luna) | 27 files under `apps/app/src` and `apps/api/src` | – | not for upstream; re-apply after syncs that touch these lines |
 
 ## Access
 
