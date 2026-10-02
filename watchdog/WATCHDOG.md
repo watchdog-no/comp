@@ -33,8 +33,9 @@ the public trust page (`TRUST_APP_URL`).
    Always merge; never rebase or squash upstream history.
 2. Railway builds and deploys the services from `main`. The API's pre-deploy command applies
    database migrations first; if it or a health check fails, the previous version keeps running.
-3. Deploy the Trigger.dev tasks (below) after every sync. Task code, shared packages, the Trigger
-   config and its build extensions all end up in the task image, so there is no safe subset to skip.
+3. Trigger.dev deploys both task projects from the same push. If that ever has to be done by hand,
+   deploy both: task code, shared packages, the Trigger config and its build extensions all end up
+   in the task image, so there is no safe subset to skip.
 
 If a Railway build fails after a sync, compare `watchdog/Dockerfile.app` and
 `watchdog/Dockerfile.portal` with how upstream builds (root `Dockerfile`, `apps/*/package.json`
@@ -45,18 +46,22 @@ Check that our changes are still separate: `git diff upstream/main --stat` shoul
 
 ## Deploying the Trigger.dev tasks
 
-`--project-ref` overrides the project hard-coded in upstream's `trigger.config.ts`, so those files
-stay untouched. From a checkout with `bun install` done and `TRIGGER_ACCESS_TOKEN` set:
+Each Trigger.dev project is connected to this repository through Trigger.dev's GitHub integration
+and deploys on push to `main` (project → Settings → Git):
+
+| Setting | CompAI API | CompAI App |
+| --- | --- | --- |
+| Production branch | `main` | `main` |
+| Trigger config file | `apps/api/trigger.config.ts` | `apps/app/trigger.config.ts` |
+| Install command | `bun install --frozen-lockfile --ignore-scripts` | same |
+| Pre-build command | `watchdog/trigger-prebuild.sh api` | `watchdog/trigger-prebuild.sh app` |
+
+By hand, from a checkout with `bun install` done and `TRIGGER_ACCESS_TOKEN` set
+(`--project-ref` overrides the project hard-coded in upstream's `trigger.config.ts`):
 
 ```bash
-(cd packages/integration-platform && bun run build) && (cd packages/email && bun run build) && (cd packages/db && bun run build)
-mkdir -p packages/db/certs && cp watchdog/railway-postgres-root-ca.crt packages/db/certs/rds-global-bundle.pem
-
-cd apps/api && bun run db:getschema   # clears old copies of the split schema, then copies the current files
-bunx trigger.dev@4.4.3 deploy --project-ref proj_csjyfjqtuiyxbznqaohk
-
-cd ../app && bun run db:generate
-bunx trigger.dev@4.4.3 deploy --project-ref proj_hmbcsehxzjnapaottxsu
+watchdog/trigger-prebuild.sh api && (cd apps/api && bunx trigger.dev@4.4.3 deploy --project-ref proj_csjyfjqtuiyxbznqaohk)
+watchdog/trigger-prebuild.sh app && (cd apps/app && bunx trigger.dev@4.4.3 deploy --project-ref proj_hmbcsehxzjnapaottxsu)
 ```
 
 Use the `trigger.dev` version pinned in `apps/*/package.json`. Each project has its own
