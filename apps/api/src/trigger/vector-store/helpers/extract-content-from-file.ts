@@ -205,7 +205,7 @@ export async function extractContentFromFile(
 
     try {
       const { text } = await generateText({
-        model: anthropic('claude-sonnet-4-6'),
+        model: anthropic('claude-sonnet-5-5'),
         messages: [
           {
             role: 'user',
@@ -261,7 +261,7 @@ export async function extractContentFromFile(
 
     try {
       const { text } = await generateText({
-        model: openai('gpt-4o-mini'),
+        model: openai('gpt-6-luna'),
         messages: [
           {
             role: 'user',

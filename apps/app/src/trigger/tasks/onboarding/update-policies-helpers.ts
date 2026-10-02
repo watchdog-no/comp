@@ -61,7 +61,7 @@ async function refineCueLines(
 
   try {
     const { object } = await generateObject({
-      model: gateway('anthropic/claude-sonnet-4.6'),
+      model: gateway('anthropic/claude-sonnet-5.5'),
       system: `You rewrite policy template instructions into direct, professional policy language. Each input is an instruction (e.g. "State that...", "Define..."). Return the equivalent text as it should appear in a published security policy — authoritative, concise, no instructional phrasing.`,
       prompt: `Policy: "${policyName}"\n\nRewrite each instruction:\n${cueLines.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}`,
       schema: z.object({

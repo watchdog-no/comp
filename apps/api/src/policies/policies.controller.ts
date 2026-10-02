@@ -1567,7 +1567,7 @@ Keep responses helpful and focused on the policy editing task.`;
     ];
 
     const result = streamText({
-      model: openai('gpt-5.5'),
+      model: openai('gpt-6.1-sol'),
       system: systemPrompt,
       messages: await convertToModelMessages(messages),
     });

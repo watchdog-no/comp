@@ -104,7 +104,7 @@ export const scoreVendorRisk = schemaTask({
       .join('\n');
 
     const { object } = await generateObject({
-      model: openai('gpt-4.1-mini'),
+      model: openai('gpt-6-luna'),
       schema: ScoreSchema,
       system: [
         'You are scoring inherent vendor risk for a customer that has just listed this vendor as part of their compliance program. Your job is to assign Likelihood and Impact buckets based on the researched data below.',

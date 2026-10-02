@@ -28,8 +28,8 @@ const DEFAULT_CUA_MODEL = 'openai/gpt-5.6-terra';
 // Claude fallback used when the primary model is unavailable (missing OpenAI key,
 // preview access, rate limits, upstream errors). Must be a computer-use-capable
 // model Stagehand supports — claude-sonnet-5 is NOT one; the proven Claude CUA
-// options are claude-opus-4-8 / claude-sonnet-4-6 / claude-haiku-4-5.
-const FALLBACK_CUA_MODEL = 'anthropic/claude-sonnet-4-6';
+// options are claude-opus-5-5 / claude-sonnet-5-5 / claude-haiku-4-5.
+const FALLBACK_CUA_MODEL = 'anthropic/claude-sonnet-5-5';
 // How many screenshot→action steps the agent may take. Generous so it can
 // recover from a wrong turn on a complex site rather than giving up.
 const CUA_MAX_STEPS = 30;

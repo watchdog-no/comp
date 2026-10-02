@@ -229,7 +229,7 @@ Please fix the automation script to resolve this error.`;
       { text: errorMessage },
       {
         body: {
-          modelId: 'google/gemini-3.1-flash-lite',
+          modelId: 'google/gemini-3.8-flash',
           reasoningEffort: 'high',
           orgId,
           taskId,

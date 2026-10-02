@@ -34,7 +34,6 @@ export class AiDescriptionService {
         schema: checkDescriptionSchema,
         system: CHECK_DESCRIPTION_SYSTEM_PROMPT,
         prompt: buildCheckDescriptionPrompt(input),
-        temperature: 0,
       });
 
       // Server-side backstop: if Haiku slipped past the prompt and emitted

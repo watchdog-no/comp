@@ -185,7 +185,7 @@ For each requirement, determine if the exercise documentation adequately address
 
   try {
     const { object } = await generateObject({
-      model: openai('gpt-4o-mini'),
+      model: openai('gpt-6-luna'),
       schema: analysisResultSchema,
       system: systemPrompt,
       prompt: userPrompt,

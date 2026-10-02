@@ -92,7 +92,7 @@ describe('rerankSuggestions', () => {
     });
 
     const { model } = generateObjectMock.mock.calls[0][0];
-    expect(model.modelId).toBe('google/gemini-3.1-flash-lite');
+    expect(model.modelId).toBe('google/gemini-3.8-flash');
     expect(model.modelId).not.toMatch(/-preview$/);
   });
 
