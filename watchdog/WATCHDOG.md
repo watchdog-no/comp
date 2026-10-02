@@ -33,8 +33,8 @@ the public trust page (`TRUST_APP_URL`).
    Always merge; never rebase or squash upstream history.
 2. Railway builds and deploys the services from `main`. The API's pre-deploy command applies
    database migrations first; if it or a health check fails, the previous version keeps running.
-3. Deploy the Trigger.dev tasks (below) when upstream changed anything under `apps/*/src/trigger`,
-   `apps/app/src/jobs` or the database schema.
+3. Deploy the Trigger.dev tasks (below) after every sync. Task code, shared packages, the Trigger
+   config and its build extensions all end up in the task image, so there is no safe subset to skip.
 
 If a Railway build fails after a sync, compare `watchdog/Dockerfile.app` and
 `watchdog/Dockerfile.portal` with how upstream builds (root `Dockerfile`, `apps/*/package.json`
@@ -52,10 +52,10 @@ stay untouched. From a checkout with `bun install` done and `TRIGGER_ACCESS_TOKE
 (cd packages/integration-platform && bun run build) && (cd packages/email && bun run build) && (cd packages/db && bun run build)
 mkdir -p packages/db/certs && cp watchdog/railway-postgres-root-ca.crt packages/db/certs/rds-global-bundle.pem
 
-cd apps/api && find ../../packages/db/prisma/schema -name '*.prisma' ! -name 'schema.prisma' -exec cp {} prisma/schema/ \;
+cd apps/api && bun run db:getschema   # clears old copies of the split schema, then copies the current files
 bunx trigger.dev@4.4.3 deploy --project-ref proj_csjyfjqtuiyxbznqaohk
 
-cd ../app && find ../../packages/db/prisma/schema -name '*.prisma' ! -name 'schema.prisma' -exec cp {} prisma/schema/ \; && bunx prisma generate --schema=prisma/schema
+cd ../app && bun run db:generate
 bunx trigger.dev@4.4.3 deploy --project-ref proj_hmbcsehxzjnapaottxsu
 ```
 
