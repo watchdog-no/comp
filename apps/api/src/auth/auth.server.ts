@@ -20,7 +20,7 @@ import {
   organization,
 } from 'better-auth/plugins';
 import { ac, allRoles } from '@trycompai/auth';
-import { createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { Redis } from '@upstash/redis';
 import type { AccessControl } from 'better-auth/plugins/access';
 import {
@@ -31,6 +31,7 @@ import {
   getBetterAuthTrustedOrigins,
   isStaticTrustedOrigin,
 } from './origin-policy';
+import { isSignUpAllowed, isSignUpRestricted } from './signup-policy';
 
 export {
   getBetterAuthTrustedOrigins,
@@ -132,6 +133,40 @@ export async function isTrustedOrigin(origin: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+// ── Optional sign-up restriction (AUTH_ALLOWED_EMAIL_DOMAINS) ────────────────
+// See ./signup-policy.ts. Inert when the variable is unset.
+
+async function hasPendingInvitation(email: string): Promise<boolean> {
+  const invitation = await db.invitation.findFirst({
+    where: {
+      email: { equals: email, mode: 'insensitive' },
+      status: 'pending',
+      expiresAt: { gt: new Date() },
+    },
+    select: { id: true },
+  });
+  return invitation !== null;
+}
+
+function canCreateAccount(email: string): Promise<boolean> {
+  return isSignUpAllowed({ email, hasPendingInvitation });
+}
+
+/**
+ * Whether a sign-in email (magic link / OTP) should go out. Existing users
+ * always get one; unknown addresses only when they would be allowed to sign
+ * up. The endpoint responds the same either way.
+ */
+async function shouldSendSignInEmail(email: string): Promise<boolean> {
+  if (!isSignUpRestricted()) return true;
+  const existingUser = await db.user.findFirst({
+    where: { email: { equals: email, mode: 'insensitive' } },
+    select: { id: true },
+  });
+  if (existingUser) return true;
+  return canCreateAccount(email);
 }
 
 // Build social providers config
@@ -304,6 +339,18 @@ export const auth = betterAuth({
     }),
   },
   databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          if (!(await canCreateAccount(user.email))) {
+            throw new APIError('FORBIDDEN', {
+              message: 'Sign-up is not available for this email address.',
+            });
+          }
+          return { data: user };
+        },
+      },
+    },
     session: {
       create: {
         before: async (session) => {
@@ -487,6 +534,7 @@ export const auth = betterAuth({
     magicLink({
       expiresIn: MAGIC_LINK_EXPIRES_IN_SECONDS,
       sendMagicLink: async ({ email, url }) => {
+        if (!(await shouldSendSignInEmail(email))) return;
         // The `url` from better-auth points to the API's verify endpoint
         // and includes the callbackURL from the client's sign-in request.
         // Flow: user clicks link → API verifies token & sets session cookie
@@ -506,6 +554,7 @@ export const auth = betterAuth({
       otpLength: 6,
       expiresIn: 10 * 60,
       async sendVerificationOTP({ email, otp }) {
+        if (!(await shouldSendSignInEmail(email))) return;
         if (process.env.NODE_ENV === 'development') {
           console.log('[Auth] Sending OTP to:', email);
         }
