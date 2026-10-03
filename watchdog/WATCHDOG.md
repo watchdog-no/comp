@@ -11,7 +11,7 @@ Railway project `compai` in the Watchdog workspace, region EU West.
 | --- | --- | --- | --- |
 | `app` (`apps/app`) | `comp.watchdog.no` | `watchdog/Dockerfile.app` | health `/api/health`, `PORT=3000` |
 | `portal` (`apps/portal`) | `portal.comp.watchdog.no` | `watchdog/Dockerfile.portal` | health `/`, `PORT=3000` |
-| `api` (`apps/api`) | `api.comp.watchdog.no` | `apps/api/Dockerfile.multistage` (upstream, unchanged) | health `/v1/health`, pre-deploy runs migrations |
+| `api` (`apps/api`) | `api.comp.watchdog.no` | `apps/api/Dockerfile.multistage` (upstream, one added line) | health `/v1/health`, pre-deploy runs migrations |
 | `backup` | – | `watchdog/Dockerfile.backup` | cron, nightly `pg_dump` to R2 |
 | `Postgres` | private network, plus a TCP proxy for Trigger.dev tasks | Railway Postgres 18 | volume in EU West |
 
@@ -86,6 +86,7 @@ Each is one commit of its own. The two auth changes are inert unless their varia
 | Restrict sign-up to allowed email domains or invited emails | `apps/api/src/auth/auth.server.ts`, `apps/api/src/auth/signup-policy.ts` (+ spec) | `AUTH_ALLOWED_EMAIL_DOMAINS` | not opened yet |
 | Configurable session cookie domain | `apps/api/src/auth/auth.server.ts` | `AUTH_COOKIE_DOMAIN` | not opened yet |
 | Verify the database against an explicit CA | `apps/api/prisma/client.ts` | `DATABASE_CA_CERT` | not opened yet |
+| Ship the SoA seed config in the API image (Statement of Applicability setup 500s without it) | `apps/api/Dockerfile.multistage` | – | not opened yet |
 | Current AI models, no `temperature` (Sonnet 5.5, Opus 5.5, Gemini 3.8 flash, gpt-6.1-sol, gpt-6-luna; Groq calls moved to gpt-6-luna) | 27 files under `apps/app/src` and `apps/api/src` | – | not for upstream; re-apply after syncs that touch these lines |
 
 ## Access
