@@ -39,7 +39,9 @@ the public trust page (`TRUST_APP_URL`).
 
 If a Railway build fails after a sync, compare `watchdog/Dockerfile.app` and
 `watchdog/Dockerfile.portal` with how upstream builds (root `Dockerfile`, `apps/*/package.json`
-`build:docker`). Upstream's own GitHub workflows are disabled in the fork's Actions settings.
+`build:docker`). GitHub Actions is enabled for the fork's PR security-regression checks.
+Upstream deployment, publishing, release, and automatic-PR workflows remain individually disabled;
+Railway and Trigger.dev deploy through their own GitHub integrations.
 
 Check that our changes are still separate: `git diff upstream/main --stat` should list only
 `watchdog/` and the files under "Changes to upstream files".
@@ -101,7 +103,7 @@ create an account.
 - `next build` inlines `NEXT_PUBLIC_*` values, so they are Docker build args. Railway passes a
   service variable to the build for each `ARG` the Dockerfile declares. Changing one needs a rebuild.
 - Our Dockerfiles switch off the type check inside `next build` (it needs more than 8 GB). Upstream
-  CI type-checks the same commits.
+CI type-checks the same commits.
 - Migrations: the API service's pre-deploy command, run inside the API image:
   `sh -c "cd /app/packages/db && node /app/node_modules/prisma/build/index.js migrate deploy 2>&1"`.
   Without the explicit `sh -c` it fails with no log output.
