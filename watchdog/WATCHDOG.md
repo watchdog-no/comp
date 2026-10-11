@@ -7,13 +7,13 @@ Watchdog-specific lives in this `watchdog/` directory so that pulling upstream i
 
 Railway project `compai` in the Watchdog workspace, region EU West.
 
-| Service | Hostname | Dockerfile | Notes |
-| --- | --- | --- | --- |
-| `app` (`apps/app`) | `comp.watchdog.no` | `watchdog/Dockerfile.app` | health `/api/health`, `PORT=3000` |
-| `portal` (`apps/portal`) | `portal.comp.watchdog.no` | `watchdog/Dockerfile.portal` | health `/`, `PORT=3000` |
-| `api` (`apps/api`) | `api.comp.watchdog.no` | `apps/api/Dockerfile.multistage` (upstream, one added line) | health `/v1/health`, pre-deploy runs migrations |
-| `backup` | – | `watchdog/Dockerfile.backup` | cron, nightly `pg_dump` to R2 |
-| `Postgres` | private network, plus a TCP proxy for Trigger.dev tasks | Railway Postgres 18 | volume in EU West |
+| Service                  | Hostname                                                | Dockerfile                                                  | Notes                                           |
+| ------------------------ | ------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
+| `app` (`apps/app`)       | `comp.watchdog.no`                                      | `watchdog/Dockerfile.app`                                   | health `/api/health`, `PORT=3000`               |
+| `portal` (`apps/portal`) | `portal.comp.watchdog.no`                               | `watchdog/Dockerfile.portal`                                | health `/`, `PORT=3000`                         |
+| `api` (`apps/api`)       | `api.comp.watchdog.no`                                  | `apps/api/Dockerfile.multistage` (upstream, one added line) | health `/v1/health`, pre-deploy runs migrations |
+| `backup`                 | –                                                       | `watchdog/Dockerfile.backup`                                | cron, nightly `pg_dump` to R2                   |
+| `Postgres`               | private network, plus a TCP proxy for Trigger.dev tasks | Railway Postgres 18                                         | volume in EU West                               |
 
 Service settings (Dockerfile path, watch paths, health check, pre-deploy command, region) are set
 on the Railway services, not in the repository: Railway has deprecated `railway.json`.
@@ -39,7 +39,9 @@ the public trust page (`TRUST_APP_URL`).
 
 If a Railway build fails after a sync, compare `watchdog/Dockerfile.app` and
 `watchdog/Dockerfile.portal` with how upstream builds (root `Dockerfile`, `apps/*/package.json`
-`build:docker`). Upstream's own GitHub workflows are disabled in the fork's Actions settings.
+`build:docker`). GitHub Actions is enabled for the fork's PR security-regression checks.
+Upstream deployment, publishing, release, and automatic-PR workflows remain individually disabled;
+Railway and Trigger.dev deploy through their own GitHub integrations.
 
 Check that our changes are still separate: `git diff upstream/main --stat` should list only
 `watchdog/` and the files under "Changes to upstream files".
@@ -49,12 +51,12 @@ Check that our changes are still separate: `git diff upstream/main --stat` shoul
 Each Trigger.dev project is connected to this repository through Trigger.dev's GitHub integration
 and deploys on push to `main` (project → Settings → Git):
 
-| Setting | CompAI API | CompAI App |
-| --- | --- | --- |
-| Production branch | `main` | `main` |
-| Trigger config file | `apps/api/trigger.config.ts` | `apps/app/trigger.config.ts` |
-| Install command | `bun install --frozen-lockfile --ignore-scripts` | same |
-| Pre-build command | `watchdog/trigger-prebuild.sh api` | `watchdog/trigger-prebuild.sh app` |
+| Setting             | CompAI API                                       | CompAI App                         |
+| ------------------- | ------------------------------------------------ | ---------------------------------- |
+| Production branch   | `main`                                           | `main`                             |
+| Trigger config file | `apps/api/trigger.config.ts`                     | `apps/app/trigger.config.ts`       |
+| Install command     | `bun install --frozen-lockfile --ignore-scripts` | same                               |
+| Pre-build command   | `watchdog/trigger-prebuild.sh api`               | `watchdog/trigger-prebuild.sh app` |
 
 By hand, from a checkout with `bun install` done and `TRIGGER_ACCESS_TOKEN` set
 (`--project-ref` overrides the project hard-coded in upstream's `trigger.config.ts`):
@@ -81,13 +83,13 @@ certificate, fetch the new root, update the file and the variable.
 
 Each is one commit of its own. The two auth changes are inert unless their variable is set.
 
-| Change | Files | Variable | Upstream PR |
-| --- | --- | --- | --- |
-| Restrict sign-up to allowed email domains or invited emails | `apps/api/src/auth/auth.server.ts`, `apps/api/src/auth/signup-policy.ts` (+ spec) | `AUTH_ALLOWED_EMAIL_DOMAINS` | not opened yet |
-| Configurable session cookie domain | `apps/api/src/auth/auth.server.ts` | `AUTH_COOKIE_DOMAIN` | not opened yet |
-| Verify the database against an explicit CA | `apps/api/prisma/client.ts` | `DATABASE_CA_CERT` | not opened yet |
-| Ship the SoA seed config in the API image (Statement of Applicability setup 500s without it) | `apps/api/Dockerfile.multistage` | – | not opened yet |
-| Current AI models, no `temperature` (Sonnet 5.5, Opus 5.5, Gemini 3.8 flash, gpt-6.1-sol, gpt-6-luna; Groq calls moved to gpt-6-luna) | 27 files under `apps/app/src` and `apps/api/src` | – | not for upstream; re-apply after syncs that touch these lines |
+| Change                                                                                                                                | Files                                                                             | Variable                     | Upstream PR                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------- |
+| Restrict sign-up to allowed email domains or invited emails                                                                           | `apps/api/src/auth/auth.server.ts`, `apps/api/src/auth/signup-policy.ts` (+ spec) | `AUTH_ALLOWED_EMAIL_DOMAINS` | not opened yet                                                |
+| Configurable session cookie domain                                                                                                    | `apps/api/src/auth/auth.server.ts`                                                | `AUTH_COOKIE_DOMAIN`         | not opened yet                                                |
+| Verify the database against an explicit CA                                                                                            | `apps/api/prisma/client.ts`                                                       | `DATABASE_CA_CERT`           | not opened yet                                                |
+| Ship the SoA seed config in the API image (Statement of Applicability setup 500s without it)                                          | `apps/api/Dockerfile.multistage`                                                  | –                            | not opened yet                                                |
+| Current AI models, no `temperature` (Sonnet 5.5, Opus 5.5, Gemini 3.8 flash, gpt-6.1-sol, gpt-6-luna; Groq calls moved to gpt-6-luna) | 27 files under `apps/app/src` and `apps/api/src`                                  | –                            | not for upstream; re-apply after syncs that touch these lines |
 
 ## Access
 
@@ -139,11 +141,11 @@ An OAuth integration shows "Coming Soon" until its OAuth app credentials are reg
 Admin -> Integrations, which needs a platform admin (`User.role = 'admin'` in the database). The
 callback URL for every provider is `https://api.comp.watchdog.no/v1/integrations/oauth/callback`.
 
-| Integration | OAuth app | Notes |
-| --- | --- | --- |
-| GitHub | OAuth App "Watchdog CompAI" in the `watchdog-no` org | "Expire user access tokens" off: the integration does not refresh tokens. Use the GitHub card, not GitHub App (its install link is hard-coded to Comp's own app). |
-| Google Workspace, GCP | One web OAuth client "Watchdog CompAI" in the Watchdog Google Cloud project | Workspace must be connected by a Workspace admin. User filter: include only `@watchdog.no`. |
-| Vercel | Integration `watchdog-compai` in the Vercel Integrations Console, unlisted, read-only on deployments and projects | Must be a classic integration. A "Sign in with Vercel" app (Settings -> Apps) only offers identity scopes and its install URL 404s. |
+| Integration           | OAuth app                                                                                                         | Notes                                                                                                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub                | OAuth App "Watchdog CompAI" in the `watchdog-no` org                                                              | "Expire user access tokens" off: the integration does not refresh tokens. Use the GitHub card, not GitHub App (its install link is hard-coded to Comp's own app). |
+| Google Workspace, GCP | One web OAuth client "Watchdog CompAI" in the Watchdog Google Cloud project                                       | Workspace must be connected by a Workspace admin. User filter: include only `@watchdog.no`.                                                                       |
+| Vercel                | Integration `watchdog-compai` in the Vercel Integrations Console, unlisted, read-only on deployments and projects | Must be a classic integration. A "Sign in with Vercel" app (Settings -> Apps) only offers identity scopes and its install URL 404s.                               |
 
 ## Backups and monitoring
 
