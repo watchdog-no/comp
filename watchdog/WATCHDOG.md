@@ -126,8 +126,8 @@ create an account.
 - `UPSTASH_VECTOR_REST_URL` / `UPSTASH_VECTOR_REST_TOKEN` (Upstash Vector index `compai-prod`,
   eu-west-1, 1536 dimensions, cosine): onboarding's step that links risks and vendors to controls
   fails without it. Needed on the app, the API and both Trigger.dev projects.
-- `AI_GATEWAY_API_KEY` (Vercel AI Gateway): onboarding, task automations and suggestion ranking
-  call their models through the gateway, not through the OpenAI and Anthropic keys.
+- `GOOGLE_GENERATIVE_AI_API_KEY` (Google Gemini API): onboarding and suggestion ranking
+- `ANTHROPIC_API_KEY` (Anthropic API): policy refinement and existing Claude features
 - `FIRECRAWL_API_KEY`: vendor website research and auditor content generation.
 - `PORT=3000` on the app and portal: Railway otherwise injects its own port and the domain returns 502.
 
@@ -165,3 +165,20 @@ Known gaps on R2: a few API paths build their S3 client without `APP_AWS_ENDPOIN
 (knowledge-base and questionnaire processing, policy PDF handling in `policies.controller.ts`,
 the device agent download). They will fail until fixed upstream; core evidence uploads use the
 shared client and work.
+
+### Direct AI provider rollout
+
+The app calls Google Gemini and Anthropic directly through the AI SDK. Vercel AI
+Gateway credentials and `AI_GATEWAY_BASE_URL` are no longer used.
+
+Before deploying this change, store `GOOGLE_GENERATIVE_AI_API_KEY` in Google Secret
+Manager and provision it on the Railway app service and the CompAI App Trigger.dev
+production environment. Keep `ANTHROPIC_API_KEY` configured in both environments.
+The Google key must have access to `gemini-3.8-flash` (onboarding) and
+`gemini-3.5-flash-lite` (ranking); policy refinement uses `claude-sonnet-5-5`.
+
+Deploy both the Railway app and the CompAI App Trigger.dev tasks. Verify onboarding
+extraction, mitigation comments, link ranking, and policy refinement before removing
+the old gateway secrets from runtime environments and Secret Manager. Existing
+Trigger workers keep their previous code until a new task deployment is promoted.
+Missing Google credentials can cause onboarding failures or similarity-only ranking.

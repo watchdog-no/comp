@@ -4,10 +4,6 @@ const { generateObjectMock } = vi.hoisted(() => ({
   generateObjectMock: vi.fn(),
 }));
 
-vi.mock('@ai-sdk/openai', () => ({
-  openai: () => 'mock-openai-model',
-}));
-
 vi.mock('ai', () => ({
   generateObject: generateObjectMock,
   jsonSchema: <T>(schema: T) => schema,
@@ -92,8 +88,9 @@ describe('rerankSuggestions', () => {
     });
 
     const { model } = generateObjectMock.mock.calls[0][0];
-    expect(model.modelId).toBe('google/gemini-3.5-flash-lite');
+    expect(model.modelId).toBe('gemini-3.5-flash-lite');
     expect(model.modelId).not.toMatch(/-preview$/);
+    expect(model.provider).toBe('google.generative-ai');
   });
 
   it('assigns 0 to candidates the LLM omits', async () => {

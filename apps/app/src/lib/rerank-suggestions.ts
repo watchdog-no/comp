@@ -1,4 +1,4 @@
-import { createGatewayProvider } from '@ai-sdk/gateway';
+import { google } from '@ai-sdk/google';
 import { generateObject, jsonSchema } from 'ai';
 
 /**
@@ -11,7 +11,7 @@ import { generateObject, jsonSchema } from 'ai';
  * surface-keyword matches ("Office Access & Door Monitoring") end up at the
  * same 0.61–0.64 cosine score.
  *
- * The reranker bridges that gap: a cheap GPT call reads each candidate's
+ * The reranker bridges that gap: a Gemini call reads each candidate's
  * title + description and scores 0–10 by actual mitigation effectiveness for
  * the given risk/vendor. The caller sorts by `rerankScore` and slices to the
  * final user-facing topK.
@@ -39,16 +39,12 @@ export interface RerankedCandidate {
   rerankScore: number;
 }
 
-const gateway = createGatewayProvider({
-  baseURL: process.env.AI_GATEWAY_BASE_URL,
-});
-
 /**
- * GA slug. Never pin a `-preview` alias here: the gateway retires it once the model
+ * GA slug. Never pin a `-preview` alias here: providers can retire it once the model
  * goes GA, and every rerank call then 404s. Both callers in `run-linkage.ts` swallow that
  * into a cosine-only fallback, so the failure is silent — suggestion quality just degrades.
  */
-const RERANK_MODEL = 'google/gemini-3.5-flash-lite' as const;
+const RERANK_MODEL = 'gemini-3.5-flash-lite' as const;
 
 const SYSTEM_PROMPT = `You are a GRC analyst evaluating which compliance tasks would meaningfully reduce a specific risk or vendor exposure.
 
@@ -114,7 +110,7 @@ export async function rerankSuggestions({
     .join('\n');
 
   const result = await generateObject({
-    model: gateway(RERANK_MODEL),
+    model: google(RERANK_MODEL),
     system: SYSTEM_PROMPT,
     prompt: userPrompt,
     schema: rerankSchema,
