@@ -106,6 +106,24 @@ Bun 1.4.4 (`packageManager`, CI and the build images), Trigger.dev 4.7.7, Next.j
 When a sync conflicts in `bun.lock` or these versions, keep the higher version and run
 `bun audit --prod` before merging.
 
+The same change moved every direct dependency in every workspace to the newest release of its
+current major (0.x: same minor), with three holds:
+
+- `better-auth` stays on `~1.6.33`: 1.7 no longer exports the `mcp` plugin from
+  `better-auth/plugins`, which `apps/api/src/auth/auth.server.ts` uses for MCP OAuth.
+- `@browserbasehq/sdk` stays on 2.6.0: later 2.x versions drop `browserSettings.fingerprint`, which
+  the API and app session code pass.
+- `@tiptap/*` stays on 3.22.5 in lockstep: in later versions (3.30.5 and 3.32.0 checked) the
+  suggestion `items` callback receives an `AbortSignal` that
+  `packages/ui/src/components/editor/extensions/mention.tsx` does not forward. Moving to 3.30.5 or
+  later (ReDoS and `__proto__` attribute fixes) needs that one-line change.
+
+`bun.lock` must stay `"lockfileVersion": 1` and install with Bun 1.3.3, which Trigger.dev's build
+uses. Keep `overrides` flat (a nested override switches the lockfile to version 3), and after
+changing dependencies with a newer Bun run `npx -y bun@1.3.3 install --lockfile-only` and check
+`npx -y bun@1.3.3 install --frozen-lockfile --dry-run`. The Prisma `version` in both
+`trigger.config.ts` files must match the `prisma` package version.
+
 ## Access
 
 Sign-up is limited to `@watchdog.no` addresses and to emails with a pending invitation. Staff are
