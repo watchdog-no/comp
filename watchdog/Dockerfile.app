@@ -1,9 +1,9 @@
 # Admin app (apps/app) for Railway. Build context is the repository root.
 # Upstream's root Dockerfile is not used: it lacks NEXT_PUBLIC_SELF_HOSTED and
 # does not copy every workspace package the app now depends on.
-FROM node:22-slim AS builder
+FROM node:22.23.4-slim AS builder
 
-RUN npm install -g bun@1.3.4
+RUN npm install -g bun@1.4.4
 
 WORKDIR /app
 COPY . .
@@ -36,7 +36,7 @@ RUN sed -i 's/^const config\(: NextConfig\)\{0,1\} = {$/&\n  typescript: { ignor
 
 RUN cd apps/app && bun run db:getschema && SKIP_ENV_VALIDATION=true bun run build:docker
 
-FROM node:22-slim AS runner
+FROM node:22.23.4-slim AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000
