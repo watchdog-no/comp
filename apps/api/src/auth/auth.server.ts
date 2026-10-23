@@ -23,10 +23,9 @@ import { ac, allRoles } from '@trycompai/auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { Redis } from '@upstash/redis';
 import type { AccessControl } from 'better-auth/plugins/access';
-import {
-  resolveMicrosoftEmail,
-  type MicrosoftEmailClaims,
-} from './microsoft-email';
+import { mcpOAuthBeforeHook } from './mcp-oauth-hooks';
+import { mapMicrosoftProfileToUser } from './microsoft-email';
+import { assertMicrosoftSignUpVerified } from './microsoft-sign-up-policy';
 import {
   getBetterAuthTrustedOrigins,
   isStaticTrustedOrigin,
@@ -205,9 +204,7 @@ if (
     // which makes better-auth abort sign-in with `email_not_found`. Fall back to
     // the username/UPN claims so these users can sign in. Accounts that DO return
     // an `email` claim are unaffected. See ./microsoft-email.ts.
-    mapProfileToUser: (profile: MicrosoftEmailClaims) => ({
-      email: resolveMicrosoftEmail(profile),
-    }),
+    mapProfileToUser: mapMicrosoftProfileToUser,
   };
 }
 
@@ -235,10 +232,6 @@ const gramMcpClient =
         disabled: false,
         redirectUrls: [process.env.GRAM_OAUTH_REDIRECT_URI],
         metadata: null,
-        // First-party client: Gram is Comp AI's own hosted MCP, so the user's
-        // login (Sign in with Google) IS the authorization — no separate consent
-        // screen is needed. This also avoids having to build a consent page UI.
-        skipConsent: true,
       }
     : null;
 
@@ -247,6 +240,8 @@ const gramMcpClient =
 const mcpLoginPage =
   process.env.MCP_OAUTH_LOGIN_PAGE ||
   `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.trycomp.ai'}/auth`;
+
+const mcpConsentPage = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.trycomp.ai'}/oauth/consent`;
 
 // =============================================================================
 // Security Validation
@@ -347,7 +342,8 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        before: async (user) => {
+        before: async (user, context) => {
+          assertMicrosoftSignUpVerified({ user, context });
           if (!(await canCreateAccount(user.email))) {
             throw new APIError('FORBIDDEN', {
               message: 'Sign-up is not available for this email address.',
@@ -419,6 +415,7 @@ export const auth = betterAuth({
     },
   },
   hooks: {
+    before: mcpOAuthBeforeHook,
     after: createAuthMiddleware(async (ctx) => {
       if (!ctx.path.startsWith('/admin/')) return;
 
@@ -587,6 +584,7 @@ export const auth = betterAuth({
         : {}),
       oidcConfig: {
         loginPage: mcpLoginPage,
+        consentPage: mcpConsentPage,
         allowDynamicClientRegistration: false,
         ...(gramMcpClient ? { trustedClients: [gramMcpClient] } : {}),
       },
@@ -629,7 +627,7 @@ export const auth = betterAuth({
     modelName: 'Account',
     accountLinking: {
       enabled: true,
-      trustedProviders: ['google', 'github', 'microsoft'],
+      trustedProviders: ['google', 'github'],
     },
     // Skip the state cookie CSRF check for OAuth flows.
     // In our cross-origin setup (app/portal → API), the state cookie may not
