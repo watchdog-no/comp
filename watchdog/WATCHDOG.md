@@ -62,13 +62,18 @@ By hand, from a checkout with `bun install` done and `TRIGGER_ACCESS_TOKEN` set
 (`--project-ref` overrides the project hard-coded in upstream's `trigger.config.ts`):
 
 ```bash
-watchdog/trigger-prebuild.sh api && (cd apps/api && bunx trigger.dev@4.4.3 deploy --project-ref proj_csjyfjqtuiyxbznqaohk)
-watchdog/trigger-prebuild.sh app && (cd apps/app && bunx trigger.dev@4.4.3 deploy --project-ref proj_hmbcsehxzjnapaottxsu)
+watchdog/trigger-prebuild.sh api && (cd apps/api && bunx trigger.dev@4.7.7 deploy --project-ref proj_csjyfjqtuiyxbznqaohk)
+watchdog/trigger-prebuild.sh app && (cd apps/app && bunx trigger.dev@4.7.7 deploy --project-ref proj_hmbcsehxzjnapaottxsu)
 ```
 
 Use the `trigger.dev` version pinned in `apps/*/package.json`. Each project has its own
 environment variables in Trigger.dev (same values as the matching Railway service, with the
 database's public proxy URL). The app project cannot be indexed without them.
+
+Each Trigger.dev CLI version pins the base image of its runtimes: with 4.7.7, `runtime: 'node-22'`
+runs Node 22.23.4. A Node security release therefore means bumping `trigger.dev` and every
+`@trigger.dev/*` package together, then redeploying both projects. Existing deployments keep their
+old image until then.
 
 Database TLS from the tasks: Railway Postgres presents a certificate signed by its own root CA
 (`watchdog/railway-postgres-root-ca.crt`, valid until 2028-12-30). The API task project has
@@ -90,6 +95,16 @@ Each is one commit of its own. The two auth changes are inert unless their varia
 | Verify the database against an explicit CA                                                                                            | `apps/api/prisma/client.ts`                                                       | `DATABASE_CA_CERT`           | not opened yet                                                |
 | Ship the SoA seed config in the API image (Statement of Applicability setup 500s without it)                                          | `apps/api/Dockerfile.multistage`                                                  | –                            | not opened yet                                                |
 | Current AI models, no `temperature` (Sonnet 5.5, Opus 5.5, Gemini 3.8 flash, gpt-6.1-sol, gpt-6-luna; Groq calls moved to gpt-6-luna) | 27 files under `apps/app/src` and `apps/api/src`                                  | –                            | not for upstream; re-apply after syncs that touch these lines |
+| October 2026 security releases (below)                                                                                                | `package.json` files, `bun.lock`, `.github/`, the API Dockerfile, one test        | –                            | Node pin is upstream #3599; keep the higher versions on syncs |
+
+The October 2026 security releases (Node, Bun and undici CVEs, Next.js remote code execution
+advisories) moved runtimes and dependencies to patched versions: Node 22.23.4 in every image,
+Bun 1.4.4 (`packageManager`, CI and the build images), Trigger.dev 4.7.7, Next.js 16.4.2, Sentry
+10.76.2, sharp 0.35.5 and patched transitive versions in `bun.lock`. The API Dockerfile now copies
+`bunfig.toml` so Bun 1.4 keeps the hoisted `node_modules` layout its later stages rely on, and
+`apps/app/src/lib/image-security.test.ts` stubs the preview props that Next 16.4 reads separately.
+When a sync conflicts in `bun.lock` or these versions, keep the higher version and run
+`bun audit --prod` before merging.
 
 ## Access
 

@@ -4,7 +4,7 @@ import loadConfig from 'next/dist/server/config';
 import NextNodeServer from 'next/dist/server/next-server';
 import { PHASE_DEVELOPMENT_SERVER } from 'next/dist/shared/lib/constants';
 import { getImgProps } from 'next/dist/shared/lib/get-img-props';
-import { imageConfigDefault } from 'next/dist/shared/lib/image-config';
+import { imageConfigDefault, prepareImageConfig } from 'next/dist/shared/lib/image-config';
 import defaultLoader from 'next/dist/shared/lib/image-loader';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { IncomingMessage, ServerResponse } from 'node:http';
@@ -20,6 +20,12 @@ vi.mock('botid/next/config', () => ({ withBotId: (config: NextConfig) => config 
 
 import portalConfig from '../../../portal/next.config';
 import appConfig from '../../next.config';
+
+const previewProps = {
+  previewModeId: '',
+  previewModeSigningKey: '',
+  previewModeEncryptionKey: '',
+};
 
 // Keep the installed Next image request handler intact. Only build manifests
 // and the rendered 404 page are replaced, so this needs no build or listener.
@@ -46,12 +52,13 @@ class ImageTestServer extends NextNodeServer {
       routes: {},
       dynamicRoutes: {},
       notFoundRoutes: [],
-      preview: {
-        previewModeId: '',
-        previewModeSigningKey: '',
-        previewModeEncryptionKey: '',
-      },
+      preview: previewProps,
     };
+  }
+
+  // Next 16.4 reads preview props from their own manifest.
+  protected getPreviewProps() {
+    return previewProps;
   }
 
   async render404(_request: NodeNextRequest, response: NodeNextResponse) {
@@ -133,7 +140,7 @@ describe.each([
     const { props, meta } = getImgProps(
       { src, alt: 'Image', width: 40, height: 40 },
       {
-        imgConf: { ...imageConfigDefault, ...config.images },
+        imgConf: prepareImageConfig(undefined, { ...imageConfigDefault, ...config.images }),
         defaultLoader,
       },
     );
