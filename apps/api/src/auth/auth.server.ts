@@ -536,6 +536,10 @@ export const auth = betterAuth({
     }),
     magicLink({
       expiresIn: MAGIC_LINK_EXPIRES_IN_SECONDS,
+      // Store magic-link tokens hashed so an OAuth state value (stored plain in
+      // the same verification table) can never be redeemed as a magic link
+      // (GHSA-965c-763c-88jm; fixed upstream only in better-auth 1.7.7).
+      storeToken: 'hashed',
       sendMagicLink: async ({ email, url }) => {
         if (!(await shouldSendSignInEmail(email))) return;
         // The `url` from better-auth points to the API's verify endpoint
