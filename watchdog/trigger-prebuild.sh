@@ -8,6 +8,8 @@ target="${1:?usage: watchdog/trigger-prebuild.sh api|app}"
 (cd packages/integration-platform && bun run build)
 (cd packages/email && bun run build)
 (cd packages/db && bun run build)
+# Tasks reach @trycompai/auth through people/utils/role-authorization; it resolves from dist.
+(cd packages/auth && bun run build)
 
 # The API task build copies this file in as the CA bundle, so tasks verify Railway Postgres.
 mkdir -p packages/db/certs
