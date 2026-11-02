@@ -96,6 +96,8 @@ Each is one commit of its own. The two auth changes are inert unless their varia
 | Ship the SoA seed config in the API image (Statement of Applicability setup 500s without it)                                          | `apps/api/Dockerfile.multistage`                                                  | –                            | not opened yet                                                |
 | Current AI models, no `temperature` (Sonnet 5.5, Opus 5.5, Gemini 3.8 flash, gpt-6.1-sol, gpt-6-luna; Groq calls moved to gpt-6-luna) | 27 files under `apps/app/src` and `apps/api/src`                                  | –                            | not for upstream; re-apply after syncs that touch these lines |
 | October 2026 security releases (below)                                                                                                | `package.json` files, `bun.lock`, `.github/`, the API Dockerfile, one test        | –                            | Node pin is upstream #3599; keep the higher versions on syncs |
+| Hash stored magic-link tokens (better-auth GHSA-965c-763c-88jm)                                                                       | `apps/api/src/auth/auth.server.ts`                                                | –                            | drop once on better-auth ≥ 1.7.7                              |
+| November 2026 MCP server advisories (below)                                                                                           | `apps/mcp-server/package.json`, `apps/mcp-server/package-lock.json`               | –                            | keep the higher versions on syncs                             |
 
 The October 2026 security releases (Node, Bun and undici CVEs, Next.js remote code execution
 advisories) moved runtimes and dependencies to patched versions: Node 22.23.4 in every image,
@@ -110,13 +112,22 @@ The same change moved every direct dependency in every workspace to the newest r
 current major (0.x: same minor), with three holds:
 
 - `better-auth` stays on `~1.6.33`: 1.7 no longer exports the `mcp` plugin from
-  `better-auth/plugins`, which `apps/api/src/auth/auth.server.ts` uses for MCP OAuth.
+  `better-auth/plugins`, which `apps/api/src/auth/auth.server.ts` uses for MCP OAuth. Its
+  replacement, `@better-auth/mcp`, needs the `jwt()` plugin, new OAuth tables and new endpoints.
+  The magic-link takeover advisory GHSA-965c-763c-88jm is fixed only in 1.7.7, so until then
+  magic-link tokens are stored hashed (`storeToken: 'hashed'`), the advisory's own mitigation.
 - `@browserbasehq/sdk` stays on 2.6.0: later 2.x versions drop `browserSettings.fingerprint`, which
   the API and app session code pass.
 - `@tiptap/*` stays on 3.22.5 in lockstep: in later versions (3.30.5 and 3.32.0 checked) the
   suggestion `items` callback receives an `AbortSignal` that
   `packages/ui/src/components/editor/extensions/mention.tsx` does not forward. Moving to 3.30.5 or
   later (ReDoS and `__proto__` attribute fixes) needs that one-line change.
+
+The November 2026 MCP server advisories moved `apps/mcp-server` (its own npm lockfile, outside the
+Bun workspace) to `@modelcontextprotocol/sdk` 1.32.2, which brings `@hono/node-server` 2.x through
+the SDK's own range, and to patched transitive versions. Its `hono` and `fast-uri` overrides are
+caret ranges so npm cannot jump to a new major, and a `tmp` override replaces the 0.0.x copy under
+`external-editor`.
 
 `bun.lock` must stay `"lockfileVersion": 1` and install with Bun 1.3.3, which Trigger.dev's build
 uses. Keep `overrides` flat (a nested override switches the lockfile to version 3), and after
