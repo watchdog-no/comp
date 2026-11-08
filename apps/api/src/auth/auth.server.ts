@@ -22,7 +22,10 @@ import {
 import { ac, allRoles } from '@trycompai/auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { Redis } from '@upstash/redis';
-import type { AccessControl } from 'better-auth/plugins/access';
+import {
+  assertAuthRequestAllowed,
+  assertEmailChangeLinkOwner,
+} from './auth-request-policy';
 import { mcpOAuthBeforeHook } from './mcp-oauth-hooks';
 import { assertMembershipRouteAllowed } from './membership-route-policy';
 import { mapMicrosoftProfileToUser } from './microsoft-email';
@@ -418,6 +421,8 @@ export const auth = betterAuth({
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       assertMembershipRouteAllowed(ctx.path);
+      assertAuthRequestAllowed({ path: ctx.path, body: ctx.body });
+      await assertEmailChangeLinkOwner(ctx);
       return mcpOAuthBeforeHook(ctx);
     }),
     after: createAuthMiddleware(async (ctx) => {

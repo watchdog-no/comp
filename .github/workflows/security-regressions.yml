@@ -48,6 +48,8 @@ jobs:
           src/auth/hybrid-auth-active-membership.spec.ts
           src/auth/task-status-access.spec.ts
           src/auth/auth.controller.spec.ts
+          src/auth/auth-request-policy.spec.ts
+          src/auth/signup-policy.spec.ts
           src/auth/permission.guard.spec.ts
           src/auth/auth-context.decorator.spec.ts
           src/auth/membership-route-policy.spec.ts
@@ -85,6 +87,7 @@ jobs:
           'src/app/(app)/[orgId]/tasks/[taskId]/automation/[automationId]/hooks'
           src/actions/trigger/heal-access-token.test.ts
           src/utils/auth.permissions.test.ts
+          src/actions/organization/accept-invitation.test.ts
       - name: Portal policy regressions
         working-directory: apps/portal
         run: >-
