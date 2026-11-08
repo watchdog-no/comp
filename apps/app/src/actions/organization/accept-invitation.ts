@@ -60,6 +60,11 @@ export const completeInvitation = authActionClientWithoutOrg
         throw new Error('Unauthorized');
       }
 
+      // Invitations are accepted from verified email addresses only.
+      if (user.emailVerified !== true) {
+        throw new Error('Verify your email address to accept this invitation');
+      }
+
       try {
         const invitation = await validateInviteCode(inviteCode, user.email);
 
@@ -92,10 +97,7 @@ export const completeInvitation = authActionClientWithoutOrg
               },
             });
           } else {
-            const mergedRole = mergeRoleStrings(
-              existingMembership.role,
-              invitation.role,
-            );
+            const mergedRole = mergeRoleStrings(existingMembership.role, invitation.role);
             if (mergedRole !== normalizeRoleString(existingMembership.role)) {
               await db.member.update({
                 where: { id: existingMembership.id },
