@@ -48,7 +48,7 @@
     "use-debounce": "^10.1.1"
   },
   "engines": {
-    "node": ">=18"
+    "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md}": "prettier --write"
@@ -102,9 +102,9 @@
   },
   "overrides": {
     "axios": "^1.20.0",
-    "vitest": "^3.2.7",
-    "@vitest/coverage-v8": "^3.2.7",
-    "@vitest/ui": "^3.2.7",
+    "vitest": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/ui": "^4.1.11",
     "form-data": "^4.0.6",
     "ws": "^8.22.0",
     "engine.io": "^6.6.11",

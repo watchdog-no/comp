@@ -140,6 +140,7 @@ describe.each([
     const { props, meta } = getImgProps(
       { src, alt: 'Image', width: 40, height: 40 },
       {
+        // next 16.4 types imgConf as the prepared config; build it the way Next does.
         imgConf: prepareImageConfig(undefined, { ...imageConfigDefault, ...config.images }),
         defaultLoader,
       },
